@@ -32,4 +32,13 @@ public class ClienteImpl implements IClienteService {
 		return bandera;
 	}
 
+	@Override
+	public Boolean verificarCedulaExistente(String cedula) {
+		Boolean bandera = false;
+		List<Cliente> lista = this.clienteDao.buscarPorCedula(cedula);
+		if(lista.size() > 0)
+			bandera = true;
+		return bandera;
+	}
+
 }

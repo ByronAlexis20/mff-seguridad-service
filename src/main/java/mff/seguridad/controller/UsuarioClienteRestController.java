@@ -1,9 +1,7 @@
 package mff.seguridad.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -13,44 +11,50 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import mff.seguridad.dto.ClienteDTO;
 import mff.seguridad.entity.Cliente;
 import mff.seguridad.service.IClienteService;
 import mff.seguridad.util.DatosSesionUtil;
+import mff.seguridad.util.FuncionesGenerales;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
-@RequestMapping("/mff-seguridad/usuariocliente")
+@RequestMapping("/seguridad/usuariocliente")
 public class UsuarioClienteRestController {
 
 	@Autowired
 	private IClienteService clienteService;
 	
 	@PostMapping("/guardar")
-	public ResponseEntity<?> guardar(@Valid @RequestBody Cliente cli, BindingResult result) {
+	public ResponseEntity<?> guardar(@Valid @RequestBody ClienteDTO cli) {
 		Cliente data = null;
 		Map<String, Object> response = new HashMap<>();
-		if (result.hasErrors()) {
-			List<String> errors = result.getFieldErrors().stream()
-					.map(err -> "El campo '" + err.getField() + "' " + err.getDefaultMessage())
-					.collect(Collectors.toList());
-
-			response.put("errors", errors);
-			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
-		}
 		try {
+			FuncionesGenerales fun = new FuncionesGenerales();
+			if(!fun.validadorDeCedula(cli.getCedula())) {
+				response.put("mensaje", "Cedula incorrecta");
+				return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+			}
+			
+			if(this.clienteService.verificarCedulaExistente(cli.getCedula())) {
+				response.put("mensaje", "Cedula ingresado ya existe");
+				return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+			}
+			
 			if(this.clienteService.verificarCorreoExistente(cli.getCorreo())) {
 				response.put("mensaje", "Correo ingresado ya existe");
 				return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
 			}
 			PasswordEncoder encoder = new BCryptPasswordEncoder();
 			data = new Cliente();
-			if(cli.getIdCliente() != null)
-				data.setIdCliente(cli.getIdCliente());
+			if(cli.getId() != null)
+				data.setIdCliente(cli.getId());
 			else
 				data.setIdCliente(null);
 			data.setApellidos(cli.getApellidos());
@@ -58,7 +62,6 @@ public class UsuarioClienteRestController {
 			data.setClave(encoder.encode(cli.getClave()));
 			data.setCelular(cli.getCelular());
 			data.setCorreo(cli.getCorreo());
-			data.setFechaNacimiento(cli.getFechaNacimiento());
 			data.setEstado("A");
 			data.setNombres(cli.getNombres());
 			data = this.clienteService.grabar(data);

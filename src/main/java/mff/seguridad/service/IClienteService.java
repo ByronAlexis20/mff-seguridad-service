@@ -8,4 +8,6 @@ public interface IClienteService {
 	
 	public Boolean verificarCorreoExistente(String correo);
 	
+	public Boolean verificarCedulaExistente(String cedula);
+	
 }
