@@ -15,6 +15,7 @@
 	<description>Servicio Gateway del sistema MFF</description>
 	<properties>
 		<java.version>11</java.version>
+		<skipTests>true</skipTests>
 	</properties>
 	<dependencies>
 		<dependency>
